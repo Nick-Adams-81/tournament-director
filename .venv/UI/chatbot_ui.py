@@ -64,7 +64,7 @@ class ChatbotUI(tk.Tk):
         if not user_input:
             return  # Do nothing if input is empty
 
-        if user_input.lower() == "exit":
+        if user_input.lower() == "exit" or user_input.lower() == "quit":
             self.quit()
 
         # Display the user's message
