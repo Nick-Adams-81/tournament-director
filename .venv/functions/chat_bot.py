@@ -7,13 +7,14 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
+from .guardrails.context_guardrail import get_allowed_keywords, is_question_relevant, REFERENCE_TEXT, get_embedding
 
 load_dotenv()
 
 api_key = os.getenv("OPENAI_API_KEY")
 
 def chat_bot(document_path, user_input):
-        
+
         # Load and process the document(s)
         document=TextLoader(document_path).load()
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
@@ -28,6 +29,16 @@ def chat_bot(document_path, user_input):
         # Initialize the chat history
         chat_history = []
 
+        with open(document_path, "r") as file:
+                document_text = file.read()
+
+        # Get allowed keywords for relevence check
+        allowed_keywords = get_allowed_keywords(document_text)
+        reference_embedding = get_embedding(REFERENCE_TEXT)
+
+        # Check if the users question is relevant using the guardrail
+        if not is_question_relevant(user_input, allowed_keywords, reference_embedding):
+                return "I can only answer questions related to TDA rules and rulings."
 
         prompt_template=ChatPromptTemplate.from_messages([
         ("system",""" You are an assistance for anserwing questions about 

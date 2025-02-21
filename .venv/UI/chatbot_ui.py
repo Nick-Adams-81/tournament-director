@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import scrolledtext
-from functions import chat_bot # Import the chatbot function
+from functions import chat_bot
 
 class ChatbotUI(tk.Tk):
     def __init__(self, document_path):
