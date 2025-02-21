@@ -1,14 +1,12 @@
 import os
 from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
-from langchain_community.document_loaders import TextLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_chroma import Chroma
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
 from .guardrails.context_guardrail import get_allowed_keywords, is_question_relevant, REFERENCE_TEXT, get_embedding
 from .guardrails.safety_guardrail import safety_guardrail
+from .data_ingestion import txt_loader
 
 load_dotenv()
 
@@ -22,17 +20,15 @@ def chat_bot(document_path, user_input):
     
     if is_profane:
         return f"Please refrain from using harmful or offensive language. Detected words: {', '.join(profane_words)}"
+    
+    # Using our LLM
+    llm = ChatOpenAI(model="gpt-4o")
 
     # Load and process the document(s)
-    document = TextLoader(document_path).load()
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
-    chunks = text_splitter.split_documents(documents=document)
+    document = txt_loader.txt_loader(document_path)
 
-    # Create vector store and retriever
-    embedding = OpenAIEmbeddings(model="text-embedding-3-large")
-    llm = ChatOpenAI(model="gpt-4o")
-    vector_store = Chroma.from_documents(chunks, embedding)
-    retriever = vector_store.as_retriever()
+    # Retrieve chunked documents
+    retriever = txt_loader.retriever(document)
 
     # Initialize the chat history
     chat_history = []
